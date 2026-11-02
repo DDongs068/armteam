@@ -44,7 +44,19 @@ Both groups get the same goal grid, tolerance and grid spacing. A goal counts as
 
 A dedicated GPU is not required; integrated graphics can run rviz2.
 
-### Setup
+### Quick start (RunPod or any Ubuntu 24.04 machine)
+
+Use a pod whose base image is **Ubuntu 24.04**, then:
+
+```bash
+git clone https://github.com/DDongs068/armteam && cd armteam
+bash setup.sh              # full install + browser desktop for rviz2 / Gazebo
+bash setup.sh --headless   # ROS only, enough for the IK sweep
+```
+
+The script installs everything below, sets CycloneDDS in `~/.bashrc` and creates a workspace at `/workspace/ros2_ws`. For the GUI, run `~/start_gui.sh` and open HTTP port **6080** from RunPod's Connect menu (expose port 6080 on the pod). Installed packages live on the container disk, so re-run `setup.sh` after a pod restart. It skips steps that are already done.
+
+### Manual setup
 
 1. Install ROS 2 Jazzy by following the [official guide](https://docs.ros.org/en/jazzy/Installation.html).
 2. Install MoveIt 2, CycloneDDS and the Gazebo bridge:
