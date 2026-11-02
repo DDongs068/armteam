@@ -1,2 +1,95 @@
 # armteam
- Robot simulation project built with ROS 2 Jazzy, MoveIt 2, and Gazebo Harmonic.
+
+Whole-body reach study for the **INDEX01** upper-body humanoid, built with ROS 2 Jazzy, MoveIt 2 and Gazebo.
+
+## Goal
+
+Measure in simulation how much larger the region INDEX01's fingertip can reach becomes when the **waist is solved together with the arm** (whole-body control), compared with the arm alone.
+
+INDEX01 has no mobile base and its torso is fixed to the floor, so walking balance (ZMP) is out of scope.
+
+## Experiment
+
+Two MoveIt planning groups that differ **only** by the waist joints:
+
+| Group | Joints | Role |
+|---|---|---|
+| `arm_only` | shoulder → wrist | Baseline (waist fixed) |
+| `arm_torso` | waist joints + the same arm joints | Comparison (waist solved together) |
+
+Both groups get the same goal grid, tolerance and grid spacing. A goal counts as reached only if all three hold:
+
+- position error ≤ tolerance
+- no self-collision
+- peak torque ratio (joint torque ÷ limit) ≤ 1.0
+
+**Key metrics:** reachable-volume gain (`arm_torso` ÷ `arm_only`), success rate per 0.1 m distance bin, max reach, self-collision count (must be 0).
+
+### Rules that keep the comparison valid
+
+- Both groups must use the **same tip link**. The code cannot check this, so verify it in the SRDF.
+- **Regenerate the ACM** (Allowed Collision Matrix) after adding `arm_torso`. Otherwise reachable volume is overestimated.
+- Never change the goal set, tolerance or grid spacing between the two conditions.
+- `MockIk` is for pipeline testing only. Never report its results.
+
+## Environment
+
+| Component | Version |
+|---|---|
+| OS | Ubuntu 24.04 LTS (native install; Windows / WSL2 not supported) |
+| ROS 2 | Jazzy |
+| MoveIt | 2 (`ros-jazzy-moveit` binaries) |
+| Simulator | Gazebo + `ros_gz` |
+| Middleware | CycloneDDS (`rmw_cyclonedds_cpp`) |
+
+A dedicated GPU is not required; integrated graphics can run rviz2.
+
+### Setup
+
+1. Install ROS 2 Jazzy by following the [official guide](https://docs.ros.org/en/jazzy/Installation.html).
+2. Install MoveIt 2, CycloneDDS and the Gazebo bridge:
+
+   ```bash
+   sudo apt install ros-jazzy-moveit ros-jazzy-rmw-cyclonedds-cpp ros-jazzy-ros-gz
+   echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
+   source ~/.bashrc
+   ```
+
+   **Everyone on the team must use CycloneDDS.** Nodes on different middleware cannot talk to each other.
+
+3. Check the install:
+
+   ```bash
+   ros2 topic list                  # runs without errors
+   echo $RMW_IMPLEMENTATION         # rmw_cyclonedds_cpp
+   ros2 pkg list | grep moveit      # MoveIt packages are listed
+   ```
+
+When reading docs, make sure they are for **Jazzy**, not Humble. Package names and APIs differ between distributions.
+
+### Robot model
+
+The INDEX01 URDF is provided by the TA. Place it under the workspace `src/`. Joint count, reach and torque limits are taken from the URDF only, because they are not published anywhere else.
+
+Joint and link names are read from `config/planning_groups.yaml`, not hard-coded. When the URDF arrives, edit only that file so the names match the SRDF.
+
+### Build and run the MoveIt demo
+
+```bash
+cd ~/<workspace>
+colcon build --packages-select <robot>_moveit_config
+source install/setup.bash
+ros2 launch <robot>_moveit_config demo.launch.py
+```
+
+## Measurement conditions
+
+Fill in this table before reporting any result. Results cannot be interpreted without it.
+
+| Item | Value |
+|---|---|
+| Tolerance | 0.01 m (default) |
+| Grid spacing | 0.1 m |
+| Goal count | 2,145 |
+| Planner | |
+| Seed | |
