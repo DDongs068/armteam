@@ -7,6 +7,7 @@
 # Usage:
 #   bash run_requirement.sh            # full install + browser desktop for rviz2 / Gazebo
 #   bash run_requirement.sh --headless # no GUI, enough for the IK sweep
+#   bash run_requirement.sh --image    # used by the Dockerfile: skips the /workspace step
 #
 # Env overrides:
 #   WS_DIR=/workspace/ros2_ws   colcon workspace (keep it on /workspace so it survives restarts)
@@ -15,10 +16,12 @@
 set -euo pipefail
 
 HEADLESS=0
+IMAGE_BUILD=0
 for arg in "$@"; do
   case "$arg" in
     --headless) HEADLESS=1 ;;
-    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
+    --image) IMAGE_BUILD=1 ;;
+    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
     *) echo "Unknown option: $arg" >&2; exit 1 ;;
   esac
 done
@@ -83,8 +86,11 @@ export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 if ! dpkg -s ros2-apt-source >/dev/null 2>&1; then
   log "Adding the ROS 2 apt repository"
   $SUDO add-apt-repository -y universe
-  ROS_APT_SOURCE_VERSION=$(curl -fsSL https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest \
-    | grep -F '"tag_name"' | awk -F'"' '{print $4}')
+  # Latest release from the GitHub API; fall back to a pinned one if the API is
+  # rate-limited (common on shared CI runners).
+  ROS_APT_SOURCE_VERSION=$(curl -fsSL https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest 2>/dev/null \
+    | grep -F '"tag_name"' | awk -F'"' '{print $4}' || true)
+  ROS_APT_SOURCE_VERSION="${ROS_APT_SOURCE_VERSION:-1.3.0}"
   curl -fsSL -o /tmp/ros2-apt-source.deb \
     "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.${VERSION_CODENAME}_all.deb"
   $SUDO dpkg -i /tmp/ros2-apt-source.deb
@@ -114,11 +120,15 @@ add_line "export LANG=en_US.UTF-8"
 add_line "[ -f ${WS_DIR}/install/setup.bash ] && source ${WS_DIR}/install/setup.bash"
 
 # --- 6. Workspace (on /workspace, so it survives pod restarts) ---------------
-log "Workspace at ${WS_DIR}"
-mkdir -p "${WS_DIR}/src"
-if [ ! -e "${WS_DIR}/src/armteam" ]; then
-  git clone https://github.com/DDongs068/armteam "${WS_DIR}/src/armteam" || \
-    echo "Could not clone armteam; clone it into ${WS_DIR}/src yourself."
+# Skipped when building the image: /workspace is a volume mounted at pod start,
+# so docker/pod_start.sh creates the workspace there instead.
+if [ "$IMAGE_BUILD" -eq 0 ]; then
+  log "Workspace at ${WS_DIR}"
+  mkdir -p "${WS_DIR}/src"
+  if [ ! -e "${WS_DIR}/src/armteam" ]; then
+    git clone https://github.com/DDongs068/armteam "${WS_DIR}/src/armteam" || \
+      echo "Could not clone armteam; clone it into ${WS_DIR}/src yourself."
+  fi
 fi
 
 # --- 7. Browser desktop for rviz2 / Gazebo GUI (skipped with --headless) -----
@@ -161,6 +171,13 @@ for p in moveit_ros_planning_interface ros_gz_sim rmw_cyclonedds_cpp; do
   if grep -qx "$p" <<<"$PKGS"; then echo "  OK       $p"; else echo "  MISSING  $p"; fi
 done
 echo "  RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}"
+
+if [ "$IMAGE_BUILD" -eq 1 ]; then
+  $SUDO apt-get clean
+  $SUDO rm -rf /var/lib/apt/lists/*
+  echo "Image build: install finished."
+  exit 0
+fi
 
 cat <<EOF
 

@@ -61,7 +61,29 @@ A dedicated GPU is not required; integrated graphics can run rviz2.
 
 The **URDF** (from the TA) describes INDEX01's links, joints and limits. The **SRDF** adds the planning groups and the collision matrix. Details: [`ENVIRONMENT.txt`](ENVIRONMENT.txt).
 
-### Quick start (RunPod or any Ubuntu 24.04 machine)
+### RunPod template (recommended)
+
+The environment is baked into a Docker image, so every new pod starts ready to use. No install step.
+
+- **Image:** `ghcr.io/ddongs068/armteam:latest`, built from [`Dockerfile`](Dockerfile) by GitHub Actions whenever `requirement.txt`, `run_requirement.sh` or `docker/` changes on `main`.
+- **Base:** `runpod/base:1.0.3-ubuntu2404` (RunPod's official Ubuntu 24.04 image: SSH, Jupyter and the web terminal work as usual).
+
+Create the template once in RunPod (**Manage → My Templates → New Template**):
+
+| Field | Value |
+|---|---|
+| Container image | `ghcr.io/ddongs068/armteam:latest` |
+| Container disk | 30 GB |
+| Volume mount path | `/workspace` |
+| Expose HTTP ports | `6080` (browser desktop), `8888` (Jupyter) |
+| Expose TCP ports | `22` (SSH) |
+| Env (optional) | `VNC_PASSWORD`, `START_GUI=0` to skip the desktop |
+
+Then deploy pods from that template. On start, `docker/pod_start.sh` creates `/workspace/ros2_ws` (first start only, it persists), clones this repo into it and starts the desktop. Open HTTP port **6080** from the Connect menu, then `vnc.html` (default password `armteam`).
+
+> One-time setup: after the first workflow run, open the `armteam` package on GitHub (**Profile → Packages → armteam → Package settings**) and set its visibility to **Public** so RunPod can pull it.
+
+### Quick start without the template (plain Ubuntu 24.04 pod or machine)
 
 Use a pod whose base image is **Ubuntu 24.04**, then:
 
