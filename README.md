@@ -147,6 +147,8 @@ When reading docs, make sure they are for **Jazzy**, not Humble. Package names a
 
 ### Robot model
 
+**URDF (Unified Robot Description Format)** is an XML file that describes a robot's physical structure. It defines the robot's links (rigid parts such as the torso, upper arm and hand), the joints that connect them, each joint's limits (angle range, speed, torque), and the shapes used for display and collision checking. ROS tools read this file to understand the robot: MoveIt uses it to compute joint angles and check collisions, and rviz2 and Gazebo use it to draw and simulate the robot.
+
 The INDEX01 URDF is provided by the TA. Place it under the workspace `src/`. Joint count, reach and torque limits are taken from the URDF only, because they are not published anywhere else.
 
 Joint and link names are read from `config/planning_groups.yaml`, not hard-coded. When the URDF arrives, edit only that file so the names match the SRDF.
