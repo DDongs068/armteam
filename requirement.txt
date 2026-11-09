@@ -1,0 +1,57 @@
+# requirement.txt — system packages for armteam (Ubuntu 24.04, ROS 2 Jazzy)
+#
+# Read by run_requirement.sh. One apt package per line, grouped by [section].
+#   [base]     installed first, before the ROS apt repository is added
+#   [ros]      ROS 2 Jazzy, MoveIt 2, Gazebo, ros2_control, CycloneDDS, build tools
+#   [desktop]  rviz2 and other GUI tools (skipped with --headless)
+#   [python]   Python libraries for the reach experiment (installed via apt, not pip)
+#   [gui]      browser desktop for RunPod: XFCE + TigerVNC + noVNC (skipped with --headless)
+#
+# To add a package: put it under the right section and re-run run_requirement.sh.
+# Lines starting with # and blank lines are ignored.
+
+[base]
+locales
+tzdata
+ca-certificates
+curl
+gnupg
+lsb-release
+software-properties-common
+git
+build-essential
+cmake
+python3-pip
+
+[ros]
+ros-jazzy-ros-base
+ros-jazzy-moveit
+ros-jazzy-moveit-resources-panda-moveit-config
+ros-jazzy-rmw-cyclonedds-cpp
+ros-jazzy-ros-gz
+ros-jazzy-ros2-control
+ros-jazzy-ros2-controllers
+ros-jazzy-gz-ros2-control
+ros-jazzy-xacro
+ros-dev-tools
+python3-colcon-common-extensions
+python3-rosdep
+
+[desktop]
+ros-jazzy-desktop
+
+[python]
+python3-numpy
+python3-yaml
+python3-matplotlib
+
+[gui]
+xfce4
+xfce4-terminal
+dbus-x11
+x11-xserver-utils
+tigervnc-standalone-server
+tigervnc-tools
+novnc
+websockify
+mesa-utils

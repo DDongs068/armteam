@@ -44,17 +44,37 @@ Both groups get the same goal grid, tolerance and grid spacing. A goal counts as
 
 A dedicated GPU is not required; integrated graphics can run rviz2.
 
+### What each component does
+
+| Component | Role |
+|---|---|
+| Ubuntu 24.04 | The only OS with ROS 2 Jazzy / MoveIt 2 binaries |
+| ROS 2 Jazzy | Framework that lets robot programs (nodes) exchange messages |
+| CycloneDDS | Middleware that carries ROS 2 messages; the whole team must use it |
+| MoveIt 2 | IK, motion planning, collision checking, Setup Assistant (SRDF + ACM) — the core tool |
+| rviz2 | 3D view of the robot and its plans; visualisation only, no physics |
+| Gazebo + ros_gz | Physics simulator, bridged to ROS 2 |
+| ros2_control | Same control interface for the simulator and the real robot |
+| colcon / rosdep | Build the workspace and install package dependencies |
+| numpy, PyYAML, matplotlib | Run the experiment, read configs, plot results |
+| XFCE + TigerVNC + noVNC | Browser desktop to see rviz2 / Gazebo on RunPod |
+
+The **URDF** (from the TA) describes INDEX01's links, joints and limits. The **SRDF** adds the planning groups and the collision matrix. Details: [`ENVIRONMENT.txt`](ENVIRONMENT.txt).
+
 ### Quick start (RunPod or any Ubuntu 24.04 machine)
 
 Use a pod whose base image is **Ubuntu 24.04**, then:
 
 ```bash
 git clone https://github.com/DDongs068/armteam && cd armteam
-bash setup.sh              # full install + browser desktop for rviz2 / Gazebo
-bash setup.sh --headless   # ROS only, enough for the IK sweep
+bash run_requirement.sh              # full install + browser desktop for rviz2 / Gazebo
+bash run_requirement.sh --headless   # no GUI, enough for the IK sweep
 ```
 
-The script installs everything below, sets CycloneDDS in `~/.bashrc` and creates a workspace at `/workspace/ros2_ws`. For the GUI, run `~/start_gui.sh` and open HTTP port **6080** from RunPod's Connect menu (expose port 6080 on the pod). Installed packages live on the container disk, so re-run `setup.sh` after a pod restart. It skips steps that are already done.
+- [`requirement.txt`](requirement.txt) lists every apt package by section. To add one, put it in the right section and re-run the script.
+- The script sets CycloneDDS in `~/.bashrc` and creates a workspace at `/workspace/ros2_ws`.
+- **Every new pod:** RunPod wipes the container disk on restart (`/workspace` survives), so run `bash run_requirement.sh` again. Packages that are already installed are skipped.
+- For the GUI, run `~/start_gui.sh` and open HTTP port **6080** from RunPod's Connect menu (expose port 6080 on the pod).
 
 ### Manual setup
 
