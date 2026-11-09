@@ -25,6 +25,30 @@ Both groups get the same goal grid, tolerance and grid spacing. A goal counts as
 
 **Key metrics:** reachable-volume gain (`arm_torso` ÷ `arm_only`), success rate per 0.1 m distance bin, max reach, self-collision count (must be 0).
 
+### Task structure
+
+```mermaid
+flowchart TD
+    A["URDF (from the TA)"] --> B["MoveIt config (SRDF)<br/>two groups + regenerated ACM"]
+    B --> C["Fixed for both conditions<br/>2,145 goals · tolerance · seed · tip link"]
+    C --> D1["arm_only (baseline)<br/>arm only · waist fixed at 0° / 15° / 30°"]
+    C --> D2["arm_torso (comparison)<br/>waist + arm solved together"]
+    D1 --> E1["IK solve (ik.py)<br/>find a joint pose per goal"]
+    D2 --> E2["IK solve (ik.py)<br/>find a joint pose per goal"]
+    E1 --> F1["Reach check<br/>error · collision · torque all pass"]
+    E2 --> F2["Reach check<br/>error · collision · torque all pass"]
+    F1 --> G["Compare and analyse<br/>volume gain · success by distance · sensitivity"]
+    F2 --> G
+    G --> H["Deliverables<br/>results table · plots · rviz2 video · report"]
+
+    classDef baseline fill:#EEEDFE,stroke:#534AB7,color:#3C3489
+    classDef torso fill:#E1F5EE,stroke:#0F6E56,color:#085041
+    class D1,E1,F1 baseline
+    class D2,E2,F2 torso
+```
+
+The two lanes run the exact same pipeline. The only difference is the group name passed to the IK solver, so any gap in the results comes from the waist.
+
 ### Rules that keep the comparison valid
 
 - Both groups must use the **same tip link**. The code cannot check this, so verify it in the SRDF.
